@@ -2,7 +2,8 @@
 #include <queue.h>
 #include <SoftwareSerial.h>
 #include <string.h>
-#include <iarduino_RTC.h>
+#include <DS3231.h>
+#include <EEPROM.h>
 
 #define BUFFER_SIZE 32
 
@@ -29,7 +30,7 @@ void TaskProcessingCommands(void *pvParameters);
 //Variables
 QueueHandle_t QueueCommands;
 SoftwareSerial bt_serial(BRX, BTX);
-iarduino_RTC time(RTC_DS3231);
+DS3231 clock;
 
 //function definition
 
@@ -37,7 +38,7 @@ void setup()
 {
     Serial.begin(9600);
     bt_serial.begin(9600);
-    time.begin();
+    clock.begin();
 
     while (!Serial)
     {
@@ -131,15 +132,17 @@ void TaskProcessingCommands (void *pvParameters) {
                 {
                     case (SET_TIME):
                         {
-                            byte tp [7] = {0};
-                            for (int i = 0; i < 7; i++) {
+                            uint16_t tp [6] = {0};
+                            for (int i = 0; i < 6; i++) {
                                 if (ptr != NULL) {
                                     ptr = strtok(NULL, "%");
                                     tp[i] = atoi(ptr);
                                 }
                             }
-                            time.settime(tp[0],tp[1],tp[2],tp[3],tp[4],tp[5],tp[6]);
-                            Serial.println(time.gettime("d-m-Y, H:i:s, D"));
+                            for (int i = 0; i < 6; i++) {
+                                Serial.println(tp[i]);
+                            }
+                            clock.setDateTime(tp[0], tp[1], tp[2], tp[3], tp[4], tp[5]);
                             break;
                         }
 
